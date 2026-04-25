@@ -79,11 +79,13 @@ export function getAppTheme(mode: AppThemeMode) {
           html: {
             height: "100%",
             width: "100%",
+            overflow: "hidden",
           },
           body: {
-            minHeight: "100%",
+            height: "100%",
             width: "100%",
             margin: 0,
+            overflow: "hidden",
             backgroundImage: 'url("/background.png")',
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -91,8 +93,9 @@ export function getAppTheme(mode: AppThemeMode) {
             backgroundAttachment: "fixed",
           },
           "#root": {
-            minHeight: "100vh",
+            height: "100vh",
             width: "100%",
+            overflow: "hidden",
             background: isDark
               ? "rgba(15, 24, 28, 0.22)"
               : "rgba(255, 255, 255, 0.22)",

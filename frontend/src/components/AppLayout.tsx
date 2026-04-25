@@ -165,7 +165,14 @@ export default function AppLayout({
 
       <Divider />
 
-      <Box sx={{ overflowY: "auto", flexGrow: 1, py: 1 }}>
+      <Box
+        sx={{
+          overflowY: "auto",
+          flexGrow: 1,
+          py: 1,
+          minHeight: 0,
+        }}
+      >
         <List component="nav">
           <ListItemButton onClick={() => setTemplatesOpen((prev) => !prev)} sx={{ mx: 1 }}>
             <ListItemIcon
@@ -313,15 +320,22 @@ export default function AppLayout({
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", color: "text.primary" }}>
+    <Box
+      sx={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        color: "text.primary",
+      }}
+    >
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
-        <Toolbar>
+        <Toolbar sx={{ minHeight: "68px !important" }}>
           {isMobile && (
             <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
               <MenuIcon />
             </IconButton>
           )}
-
+  
           <Box
             sx={{
               display: "flex",
@@ -348,35 +362,35 @@ export default function AppLayout({
             <Typography
               variant="h4"
               sx={{
-                fontSize: { xs: "1.15rem", md: "1.5rem" },
-                fontWeight: 600,
+                fontSize: { xs: "1.1rem", md: "1.5rem" },
+                fontWeight: 700,
                 lineHeight: 1,
-                letterSpacing: "0.02em",
                 display: "flex",
                 alignItems: "center",
+                letterSpacing: "0.01em",
                 m: 0,
                 color: "text.primary",
-                textShadow: "0 1px 2px rgba(255,255,255,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+                textShadow: "0 1px 2px rgba(255,255,255,0.16), 0 2px 8px rgba(0,0,0,0.06)",
               }}
             >
               Automated Infra Provisioning
             </Typography>
           </Box>
-
+  
           <Tooltip title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
             <IconButton color="inherit" onClick={toggleTheme} sx={{ mr: 1 }}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
-
+  
           {user && !isMobile && (
             <Typography variant="body2" color="inherit">
-              Hello, <u>{user.displayName}</u>
+              Hello, {user.displayName}
             </Typography>
           )}
         </Toolbar>
       </AppBar>
-
+  
       {isMobile ? (
         <Drawer
           variant="temporary"
@@ -387,8 +401,9 @@ export default function AppLayout({
             "& .MuiDrawer-paper": {
               width: drawerWidth,
               boxSizing: "border-box",
-              mt: "64px",
-              height: "calc(100% - 64px)",
+              top: "68px",
+              height: "calc(100vh - 68px)",
+              overflow: "hidden",
             },
           }}
         >
@@ -403,46 +418,45 @@ export default function AppLayout({
             "& .MuiDrawer-paper": {
               width: currentDrawerWidth,
               boxSizing: "border-box",
-              mt: "64px",
-              height: "calc(100% - 64px)",
+              top: "68px",
+              height: "calc(100vh - 68px)",
               transition: theme.transitions.create("width", {
                 easing: theme.transitions.easing.sharp,
                 duration: theme.transitions.duration.standard,
               }),
-              overflowX: "hidden",
+              overflow: "hidden",
             },
           }}
         >
           {drawerContent}
         </Drawer>
       )}
-
-<Box
-  component="main"
-  sx={{
-    flexGrow: 1,
-    mt: "64px",
-    minWidth: 0,
-    px: { xs: 2, md: 4 },
-    py: { xs: 2, md: 4 },
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    transition: theme.transitions.create(["padding"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.standard,
-    }),
-  }}
->
-  <Box
-    sx={{
-      width: "100%",
-      maxWidth: "1200px",
-    }}
-  >
-    {children}
-  </Box>
-</Box>
+  
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          mt: "68px",
+          height: "calc(100vh - 68px)",
+          overflowY: "auto",
+          overflowX: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 2, md: 4 },
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "1200px",
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
     </Box>
   );
 }
