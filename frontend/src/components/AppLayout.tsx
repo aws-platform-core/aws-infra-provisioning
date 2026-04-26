@@ -3,7 +3,6 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Container,
   Box,
   Drawer,
   List,
@@ -35,6 +34,8 @@ import {
   SettingsEthernet as SettingsEthernetIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
+  Cloud as CloudIcon,
+  Dns as DnsIcon,
 } from "@mui/icons-material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
@@ -43,6 +44,14 @@ import { useThemeMode } from "../context/ThemeModeContext";
 
 const drawerWidth = 280;
 const collapsedDrawerWidth = 76;
+
+function getProviderIcon(provider: string) {
+  const normalized = provider.toLowerCase();
+
+  if (normalized === "aws") return <CloudQueueIcon />;
+  if (normalized === "azure") return <CloudIcon />;
+  return <DnsIcon />;
+}
 
 function getCategoryIcon(category: string) {
   const normalized = category.toLowerCase();
@@ -66,8 +75,10 @@ function getTemplateIcon(category: string) {
 
 export default function AppLayout({
   children,
+  disableContentScroll = false,
 }: {
   children: React.ReactNode;
+  disableContentScroll?: boolean;
 }) {
   const { user, logout } = useAuth();
   const { groupedTemplates, loading: templatesLoading } = useTemplateCatalog();
@@ -80,15 +91,24 @@ export default function AppLayout({
   const [drawerCollapsed, setDrawerCollapsed] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(true);
   const [requestsOpen, setRequestsOpen] = useState(true);
+  const [openProviders, setOpenProviders] = useState<Record<string, boolean>>({});
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
 
   const currentDrawerWidth = drawerCollapsed ? collapsedDrawerWidth : drawerWidth;
-  const categoryNames = useMemo(() => Object.keys(groupedTemplates), [groupedTemplates]);
+  const providerNames = useMemo(() => Object.keys(groupedTemplates), [groupedTemplates]);
 
-  const handleToggleCategory = (category: string) => {
+  const handleToggleProvider = (provider: string) => {
+    setOpenProviders((prev) => ({
+      ...prev,
+      [provider]: !(prev[provider] ?? true),
+    }));
+  };
+
+  const handleToggleCategory = (provider: string, category: string) => {
+    const key = `${provider}::${category}`;
     setOpenCategories((prev) => ({
       ...prev,
-      [category]: !(prev[category] ?? true),
+      [key]: !(prev[key] ?? true),
     }));
   };
 
@@ -114,7 +134,7 @@ export default function AppLayout({
       selected={isSelected(path)}
       onClick={handleMobileNavClick}
       sx={{
-        pl: nested ? (drawerCollapsed ? 2 : 4) : 2,
+        pl: nested ? (drawerCollapsed ? 2 : 7) : 2,
         pr: 2,
         minHeight: 44,
         mx: 1,
@@ -205,14 +225,15 @@ export default function AppLayout({
               )}
 
               {!templatesLoading &&
-                categoryNames.map((category) => {
-                  const categoryOpen = openCategories[category] ?? true;
-                  const templates = groupedTemplates[category] || [];
+                providerNames.map((provider) => {
+                  const providerOpen = openProviders[provider] ?? true;
+                  const categories = groupedTemplates[provider] || {};
+                  const categoryNames = Object.keys(categories);
 
                   return (
-                    <React.Fragment key={category}>
+                    <React.Fragment key={provider}>
                       <ListItemButton
-                        onClick={() => handleToggleCategory(category)}
+                        onClick={() => handleToggleProvider(provider)}
                         sx={{
                           mx: 1,
                           pl: drawerCollapsed ? 2 : 3,
@@ -227,31 +248,76 @@ export default function AppLayout({
                             color: "inherit",
                           }}
                         >
-                          {getCategoryIcon(category)}
+                          {getProviderIcon(provider)}
                         </ListItemIcon>
 
                         {!drawerCollapsed && (
                           <>
-                            <ListItemText primary={category} />
-                            {categoryOpen ? <ExpandLess /> : <ExpandMore />}
+                            <ListItemText primary={provider.toUpperCase()} />
+                            {providerOpen ? <ExpandLess /> : <ExpandMore />}
                           </>
                         )}
                       </ListItemButton>
 
                       <Collapse
-                        in={categoryOpen || drawerCollapsed}
+                        in={providerOpen || drawerCollapsed}
                         timeout="auto"
                         unmountOnExit={false}
                       >
                         <List component="div" disablePadding>
-                          {templates.map((template) =>
-                            renderNavItem(
-                              template.name,
-                              `/templates/${template.id}`,
-                              getTemplateIcon(template.category),
-                              true
-                            )
-                          )}
+                          {categoryNames.map((category) => {
+                            const categoryKey = `${provider}::${category}`;
+                            const categoryOpen = openCategories[categoryKey] ?? true;
+                            const templates = categories[category] || [];
+
+                            return (
+                              <React.Fragment key={categoryKey}>
+                                <ListItemButton
+                                  onClick={() => handleToggleCategory(provider, category)}
+                                  sx={{
+                                    mx: 1,
+                                    pl: drawerCollapsed ? 2 : 5,
+                                    color: "text.primary",
+                                  }}
+                                >
+                                  <ListItemIcon
+                                    sx={{
+                                      minWidth: drawerCollapsed ? 0 : 40,
+                                      mr: drawerCollapsed ? 0 : 1,
+                                      justifyContent: "center",
+                                      color: "inherit",
+                                    }}
+                                  >
+                                    {getCategoryIcon(category)}
+                                  </ListItemIcon>
+
+                                  {!drawerCollapsed && (
+                                    <>
+                                      <ListItemText primary={category} />
+                                      {categoryOpen ? <ExpandLess /> : <ExpandMore />}
+                                    </>
+                                  )}
+                                </ListItemButton>
+
+                                <Collapse
+                                  in={categoryOpen || drawerCollapsed}
+                                  timeout="auto"
+                                  unmountOnExit={false}
+                                >
+                                  <List component="div" disablePadding>
+                                    {templates.map((template) =>
+                                      renderNavItem(
+                                        template.name,
+                                        `/templates/${template.id}`,
+                                        getTemplateIcon(template.category),
+                                        true
+                                      )
+                                    )}
+                                  </List>
+                                </Collapse>
+                              </React.Fragment>
+                            );
+                          })}
                         </List>
                       </Collapse>
                     </React.Fragment>
@@ -335,7 +401,7 @@ export default function AppLayout({
               <MenuIcon />
             </IconButton>
           )}
-  
+
           <Box
             sx={{
               display: "flex",
@@ -376,13 +442,13 @@ export default function AppLayout({
               Automated Infra Provisioning
             </Typography>
           </Box>
-  
+
           <Tooltip title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
             <IconButton color="inherit" onClick={toggleTheme} sx={{ mr: 1 }}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
-  
+
           {user && !isMobile && (
             <Typography variant="body2" color="inherit">
               Hello, {user.displayName}
@@ -390,7 +456,7 @@ export default function AppLayout({
           )}
         </Toolbar>
       </AppBar>
-  
+
       {isMobile ? (
         <Drawer
           variant="temporary"
@@ -431,7 +497,7 @@ export default function AppLayout({
           {drawerContent}
         </Drawer>
       )}
-  
+
       <Box
         component="main"
         sx={{
@@ -439,7 +505,7 @@ export default function AppLayout({
           minWidth: 0,
           mt: "68px",
           height: "calc(100vh - 68px)",
-          overflowY: "auto",
+          overflowY: disableContentScroll ? "hidden" : "auto",
           overflowX: "hidden",
           px: { xs: 2, md: 4 },
           py: { xs: 2, md: 4 },

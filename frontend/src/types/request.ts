@@ -18,6 +18,7 @@ export type CreateRequestPayload = {
     template_id: string;
     parameters: Record<string, unknown>;
     status: string;
+    provider: string;
     branch_name: string;
     pr_url: string;
     created_at: string;

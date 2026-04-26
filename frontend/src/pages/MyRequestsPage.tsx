@@ -267,7 +267,7 @@ export default function MyRequestsPage() {
                             </Typography>
                           </Box>
 
-                          <Box>
+                          {/* <Box>
                             <Typography variant="caption" color="text.secondary">
                               Pull Request
                             </Typography>
@@ -276,6 +276,13 @@ export default function MyRequestsPage() {
                                 Open PR
                               </Link>
                             </Typography>
+                          </Box> */}
+
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              Provider
+                            </Typography>
+                            <Typography variant="body1">{request.provider?.toUpperCase()}</Typography>
                           </Box>
 
                           <Divider sx={{ my: 1 }} />
@@ -345,7 +352,8 @@ export default function MyRequestsPage() {
                           </TableSortLabel>
                         </TableCell>
 
-                        <TableCell>PR</TableCell>
+                        {/* <TableCell>PR</TableCell> */}
+                        <TableCell>Provider</TableCell>
 
                         <TableCell sortDirection={orderBy === "created_at" ? order : false}>
                           <TableSortLabel
@@ -382,11 +390,13 @@ export default function MyRequestsPage() {
                             {request.branch_name}
                           </TableCell>
 
-                          <TableCell>
+                          {/* <TableCell>
                             <Link href={request.pr_url} target="_blank" rel="noreferrer">
                               Open PR
                             </Link>
-                          </TableCell>
+                          </TableCell> */}
+
+                          <TableCell>{request.provider}</TableCell>
 
                           <TableCell>
                             {new Date(request.created_at).toLocaleString()}

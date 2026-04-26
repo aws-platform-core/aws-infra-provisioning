@@ -114,13 +114,19 @@ export default function RequestDetailsPage() {
                 <Typography variant="body1">{request.branch_name}</Typography>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Pull Request
                 </Typography>
                 <Link href={request.pr_url} target="_blank" rel="noreferrer">
                   {request.pr_url}
                 </Link>
+              </Grid> */}
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Provider
+                </Typography>
+                <Typography variant="body1">{request.provider?.toUpperCase()}</Typography>
               </Grid>
 
               <Grid item xs={12} md={6}>

@@ -7,6 +7,7 @@ export type RequestRecord = {
   request_id: string;
   requested_by: string;
   requested_by_sub: string;
+  provider: string;
   template_id: string;
   parameters: Record<string, unknown>;
   status: string;

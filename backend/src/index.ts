@@ -90,6 +90,7 @@ app.post("/api/requests", authMiddleware, async (req: Request, res: Response) =>
       requested_by_sub: requestedBySub,
       template_id: template_id!,
       parameters: parameters ?? {},
+      provider: template.provider,
       status: "PR_CREATED",
       pr_url: `https://github.com/your-org/terraform-live/pull/123`,
       branch_name: `feature/${requestId}-${template_id}`,

@@ -2,11 +2,13 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { getTemplates } from "../api/templates";
 import type { Template } from "../types/template";
 
+type TemplatesByProviderAndCategory = Record<string, Record<string, Template[]>>;
+
 type TemplateCatalogContextType = {
   templates: Template[];
   loading: boolean;
   error: string;
-  groupedTemplates: Record<string, Template[]>;
+  groupedTemplates: TemplatesByProviderAndCategory;
 };
 
 const TemplateCatalogContext = createContext<TemplateCatalogContextType | undefined>(undefined);
@@ -24,12 +26,20 @@ export function TemplateCatalogProvider({ children }: { children: React.ReactNod
   }, []);
 
   const groupedTemplates = useMemo(() => {
-    return templates.reduce<Record<string, Template[]>>((acc, template) => {
-      const category = template.category || "Other";
-      if (!acc[category]) {
-        acc[category] = [];
+    return templates.reduce<TemplatesByProviderAndCategory>((acc, template) => {
+      const provider = template.provider || "other";
+      const category = template.category || "other";
+
+      if (!acc[provider]) {
+        acc[provider] = {};
       }
-      acc[category].push(template);
+
+      if (!acc[provider][category]) {
+        acc[provider][category] = [];
+      }
+
+      acc[provider][category].push(template);
+
       return acc;
     }, {});
   }, [templates]);
