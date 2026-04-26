@@ -11,6 +11,7 @@ import {
   getRequestById,
   listRequestsByUser,
 } from "./repositories/requestRepository.js";
+import { provisionRequestViaPullRequest } from "./services/requestProvisioningService.js";
 
 const app = express();
 const port = Number(process.env.PORT || 8080);
@@ -74,26 +75,50 @@ app.post("/api/requests", authMiddleware, async (req: Request, res: Response) =>
       typeof req.user?.given_name === "string"
         ? req.user.given_name
         : typeof req.user?.email === "string"
-        ? req.user.email
-        : typeof req.user?.["cognito:username"] === "string"
-        ? req.user["cognito:username"]
-        : req.user?.sub || "unknown";
+          ? req.user.email
+          : typeof req.user?.["cognito:username"] === "string"
+            ? req.user["cognito:username"]
+            : req.user?.sub || "unknown";
 
     const requestedBySub =
       typeof req.user?.sub === "string" ? req.user.sub : "unknown";
 
     const now = new Date().toISOString();
 
+    const finalParameters = { ...(parameters ?? {}) };
+
+    if (template.id === "aws-s3-bucket") {
+      const bucketName = finalParameters.bucket_name;
+
+      if (typeof bucketName === "string") {
+        const shortRequestId = requestId.replace("req-", "").slice(0, 8);
+        finalParameters.bucket_name = `${bucketName}-${shortRequestId}`.toLowerCase();
+      }
+    }
+
+    const provisionResult = await provisionRequestViaPullRequest({
+      requestId,
+      provider: template.provider,
+      templateId: template_id!,
+      moduleSource: `../../modules/${template_id}`,
+      parameters: finalParameters ?? {},
+      requestedBy,
+      createdAt: now,
+    });
+
+    
+
     const record = {
       request_id: requestId,
       requested_by: requestedBy,
       requested_by_sub: requestedBySub,
       template_id: template_id!,
-      parameters: parameters ?? {},
+      parameters: finalParameters ?? {},
       provider: template.provider,
       status: "PR_CREATED",
-      pr_url: `https://github.com/your-org/terraform-live/pull/123`,
+      pr_url: provisionResult.prUrl,
       branch_name: `feature/${requestId}-${template_id}`,
+      pr_number: provisionResult.prNumber,
       created_at: now,
       updated_at: now
     };

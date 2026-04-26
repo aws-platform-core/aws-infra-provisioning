@@ -1,7 +1,11 @@
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamo } from "../db/dynamo.js";
 
-const tableName = process.env.DYNAMODB_REQUESTS_TABLE!;
+const tableName = process.env.DYNAMODB_REQUESTS_TABLE;
+
+if (!tableName) {
+  throw new Error("Missing DYNAMODB_REQUESTS_TABLE");
+}
 
 export type RequestRecord = {
   request_id: string;
@@ -13,12 +17,18 @@ export type RequestRecord = {
   status: string;
   branch_name: string;
   pr_url: string;
+  pr_number: number;
   created_at: string;
   updated_at: string;
 };
 
 export async function createRequest(record: RequestRecord): Promise<void> {
-  await dynamo.send(new PutCommand({ TableName: tableName, Item: record }));
+  await dynamo.send(
+    new PutCommand({
+      TableName: tableName,
+      Item: record,
+    })
+  );
 }
 
 export async function getRequestById(
@@ -27,9 +37,12 @@ export async function getRequestById(
   const result = await dynamo.send(
     new GetCommand({
       TableName: tableName,
-      Key: { request_id: requestId },
+      Key: {
+        request_id: requestId,
+      },
     })
   );
+
   return result.Item as RequestRecord | undefined;
 }
 
@@ -44,7 +57,7 @@ export async function listRequestsByUser(
       ExpressionAttributeValues: {
         ":requested_by_sub": requestedBySub,
       },
-      ScanIndexForward: false
+      ScanIndexForward: false,
     })
   );
 

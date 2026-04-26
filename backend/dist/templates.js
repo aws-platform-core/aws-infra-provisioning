@@ -10,7 +10,8 @@ export const templates = [
                 name: "bucket_name",
                 label: "Bucket Name",
                 type: "string",
-                required: true
+                required: true,
+                // pattern: "^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+$"
             },
             {
                 name: "environment",

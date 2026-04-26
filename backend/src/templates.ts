@@ -7,6 +7,7 @@ export type TemplateField = {
   options?: string[];
   placeholder?: string;
   helperText?: string;
+  pattern?: string;
 };
 
 export type Template = {
@@ -30,7 +31,8 @@ export const templates: Template[] = [
         name: "bucket_name",
         label: "Bucket Name",
         type: "string",
-        required: true
+        required: true,
+        // pattern: "^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+$"
       },
       {
         name: "environment",

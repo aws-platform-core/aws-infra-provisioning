@@ -7,6 +7,7 @@ export type TemplateField = {
   options?: string[];
   placeholder?: string;
   helperText?: string;
+  pattern?: string;
 };
 
 export type Template = {
