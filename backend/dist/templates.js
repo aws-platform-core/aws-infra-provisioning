@@ -1,32 +1,69 @@
 export const templates = [
     {
         id: "aws-s3-bucket",
+        provider: "aws",
         name: "AWS S3 Bucket",
         description: "Provision a secure S3 bucket",
         category: "storage",
-        provider: "aws",
+        terraform_module_path: "../../modules/aws-s3-bucket",
         parameters: [
             {
                 name: "bucket_name",
                 label: "Bucket Name",
                 type: "string",
                 required: true,
-                // pattern: "^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+$"
+                placeholder: "my-app-results",
+                helperText: "Enter the base bucket name. A unique suffix will be appended automatically during provisioning.",
+                pattern: "^[a-z0-9]+(-[a-z0-9]+)+$",
+                patternErrorMessage: "Bucket name must use lowercase letters/numbers and hyphens, for example: app-dev-results",
             },
             {
                 name: "environment",
                 label: "Environment",
                 type: "select",
                 required: true,
-                options: ["dev", "agile", "prod"]
+                options: ["dev", "qa", "prod"],
+                default: "dev",
+                helperText: "Target environment for this bucket.",
             },
             {
                 name: "versioning",
                 label: "Enable Versioning",
                 type: "boolean",
-                default: true
-            }
-        ]
+                default: true,
+                helperText: "Recommended for protection against accidental overwrite and delete.",
+            },
+            {
+                name: "tag_owner",
+                label: "Tag: Owner",
+                type: "string",
+                required: true,
+                placeholder: "platform-team",
+                helperText: "Owning team or individual.",
+                pattern: "^[A-Za-z0-9._-]{2,50}$",
+                patternErrorMessage: "Owner tag must be 2-50 characters and may include letters, numbers, dot, underscore, and hyphen.",
+            },
+            {
+                name: "tag_cost_center",
+                label: "Tag: Cost Center",
+                type: "string",
+                required: true,
+                placeholder: "CC1234",
+                helperText: "Cost center for billing and chargeback.",
+                pattern: "^[A-Za-z0-9._-]{2,30}$",
+                patternErrorMessage: "Cost center tag must be 2-30 characters and may include letters, numbers, dot, underscore, and hyphen.",
+            },
+            {
+                name: "tag_project",
+                label: "Tag: Project",
+                type: "string",
+                required: true,
+                placeholder: "infra-demo",
+                helperText: "Project or application name for tagging.",
+                pattern: "^[A-Za-z0-9._-]{2,50}$",
+                patternErrorMessage: "Project tag must be 2-50 characters and may include letters, numbers, dot, underscore, and hyphen.",
+            },
+        ],
     },
     {
         id: "aws-lambda-function",
@@ -34,6 +71,7 @@ export const templates = [
         description: "Provision a serverless Lambda function",
         category: "compute",
         provider: "aws",
+        terraform_module_path: "../../modules/aws-lambda-function",
         parameters: [
             {
                 name: "function_name",
@@ -62,6 +100,7 @@ export const templates = [
         description: "Provision a REST API Gateway",
         category: "network",
         provider: "aws",
+        terraform_module_path: "../../modules/aws-api-gateway",
         parameters: [
             {
                 name: "api_name",
@@ -90,6 +129,7 @@ export const templates = [
         description: "Provision a serverless Lambda function",
         category: "compute",
         provider: "aws",
+        terraform_module_path: "../../modules/aws-lambda-function",
         parameters: [
             {
                 name: "function_name",
@@ -124,6 +164,7 @@ export const templates = [
         description: "Provision an EC2 instance",
         category: "compute",
         provider: "aws",
+        terraform_module_path: "../../modules/aws-ec2-instance",
         parameters: [
             {
                 name: "instance_name",
@@ -153,6 +194,7 @@ export const templates = [
         name: "Azure Storage Account",
         description: "Provision an Azure Storage Account",
         category: "storage",
+        terraform_module_path: "../../modules/azure-storage-bucket",
         parameters: [
             {
                 name: "account_name",

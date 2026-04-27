@@ -8,6 +8,7 @@ export type TemplateField = {
   placeholder?: string;
   helperText?: string;
   pattern?: string;
+  patternErrorMessage?: string;
 };
 
 export type Template = {

@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { runTemplateValidator } from "./validators/templateValidatorRegistry.js";
 dotenv.config();
 
 import express, { type Request, type Response } from "express";
@@ -12,6 +13,7 @@ import {
   listRequestsByUser,
 } from "./repositories/requestRepository.js";
 import { provisionRequestViaPullRequest } from "./services/requestProvisioningService.js";
+import { mapTemplateParametersToModuleInputs } from "./mappers/templateParameterMapper.js";
 
 const app = express();
 const port = Number(process.env.PORT || 8080);
@@ -71,6 +73,7 @@ app.post("/api/requests", authMiddleware, async (req: Request, res: Response) =>
     }
 
     const requestId = `req-${Date.now()}`;
+
     const requestedBy =
       typeof req.user?.given_name === "string"
         ? req.user.given_name
@@ -85,45 +88,35 @@ app.post("/api/requests", authMiddleware, async (req: Request, res: Response) =>
 
     const now = new Date().toISOString();
 
-    const finalParameters = { ...(parameters ?? {}) };
+    let finalParameters: Record<string, unknown> = { ...(parameters ?? {}) };
 
-    if (template.id === "aws-s3-bucket") {
-      const bucketName = finalParameters.bucket_name;
-    
-      if (typeof bucketName !== "string" || bucketName.trim() === "") {
-        return res.status(400).json({
-          message: "Bucket name is required",
-        });
-      }
-    
-      const normalizedBaseName = bucketName
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9-]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-+|-+$/g, "");
-    
-      if (!normalizedBaseName || normalizedBaseName.length < 3) {
-        return res.status(400).json({
-          message: "Bucket name is invalid after normalization",
-        });
-      }
-    
-      const shortRequestId = requestId.replace("req-", "").slice(0, 8);
-      finalParameters.bucket_name = `${normalizedBaseName}-${shortRequestId}`;
+    const validationResult = runTemplateValidator(template.id, {
+      requestId,
+      parameters: finalParameters,
+    });
+
+    if (!validationResult.valid) {
+      return res.status(400).json({
+        message: "Template request validation failed",
+        errors: validationResult.errors,
+      });
     }
+
+    finalParameters = validationResult.normalizedParameters ?? finalParameters;
+    const moduleInputs = mapTemplateParametersToModuleInputs(
+      template.id,
+      finalParameters
+    );
 
     const provisionResult = await provisionRequestViaPullRequest({
       requestId,
       provider: template.provider,
-      templateId: template_id!,
+      templateId: template.id,
       moduleSource: `../../modules/${template_id}`,
-      parameters: finalParameters ?? {},
+      parameters: moduleInputs,
       requestedBy,
       createdAt: now,
     });
-
-    
 
     const record = {
       request_id: requestId,
