@@ -17,7 +17,7 @@
           "label": "Environment",
           "type": "select",
           "required": true,
-          "options": ["dev", "qa", "prod"]
+          "options": ["dev", "agile", "prod"]
         },
         {
           "name": "versioning",

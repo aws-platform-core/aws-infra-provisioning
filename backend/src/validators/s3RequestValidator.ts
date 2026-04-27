@@ -22,14 +22,6 @@ export type TemplateValidationInput = {
     return /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(value);
   }
   
-  function isValidKmsArn(value: string): boolean {
-    return /^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:key\/[A-Za-z0-9-]+$/.test(value);
-  }
-  
-  function isValidDocumentName(value: string): boolean {
-    return /^[A-Za-z0-9._/-]+$/.test(value);
-  }
-  
   function isNonEmptyString(value: unknown): value is string {
     return typeof value === "string" && value.trim() !== "";
   }
@@ -40,11 +32,8 @@ export type TemplateValidationInput = {
     const errors: string[] = [];
     const params = { ...input.parameters };
   
-    const environment = typeof params.environment === "string" ? params.environment : "";
-    const encryptionMode =
-      typeof params.encryption_mode === "string" ? params.encryption_mode : "sse-s3";
-    const websiteHostingEnabled = Boolean(params.website_hosting_enabled);
-    const forceDestroy = Boolean(params.force_destroy);
+    const environment =
+      typeof params.environment === "string" ? params.environment : "";
   
     if (!isNonEmptyString(params.bucket_name)) {
       errors.push("Bucket name is required.");
@@ -75,53 +64,8 @@ export type TemplateValidationInput = {
       }
     }
   
-    if (!["sse-s3", "kms"].includes(encryptionMode)) {
-      errors.push("Encryption mode must be either 'sse-s3' or 'kms'.");
-    }
-  
-    if (encryptionMode === "kms") {
-      if (!isNonEmptyString(params.kms_key_arn)) {
-        errors.push("KMS Key ARN is required when encryption mode is 'kms'.");
-      } else if (!isValidKmsArn(params.kms_key_arn)) {
-        errors.push("KMS Key ARN is invalid.");
-      }
-    } else {
-      params.kms_key_arn = "";
-    }
-  
-    const lifecyclePolicyType =
-      typeof params.lifecycle_policy_type === "string"
-        ? params.lifecycle_policy_type
-        : "none";
-  
-    if (
-      !["none", "logs-30-delete-365", "archive-30-90", "glacier-60"].includes(
-        lifecyclePolicyType
-      )
-    ) {
-      errors.push("Lifecycle policy type is invalid.");
-    }
-  
-    if (websiteHostingEnabled) {
-      if (!isNonEmptyString(params.index_document)) {
-        errors.push("Index document is required when static website hosting is enabled.");
-      } else if (!isValidDocumentName(params.index_document)) {
-        errors.push("Index document name is invalid.");
-      }
-  
-      if (
-        isNonEmptyString(params.error_document) &&
-        !isValidDocumentName(params.error_document)
-      ) {
-        errors.push("Error document name is invalid.");
-      }
-    } else {
-      params.index_document = "";
-      params.error_document = "";
-    }
-  
-    if (forceDestroy && environment === "prod") {
-      errors.push("Force destroy is not allowed for production buckets.");
+    if (!["dev", "agile", "prod"].includes(environment)) {
+      errors.push("Environment must be one of: dev, agile, prod.");
     }
   
     if (!isNonEmptyString(params.tag_owner)) {

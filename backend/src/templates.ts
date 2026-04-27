@@ -47,7 +47,7 @@ export const templates: Template[] = [
         label: "Environment",
         type: "select",
         required: true,
-        options: ["dev", "qa", "prod"],
+        options: ["dev", "agile", "prod"],
         default: "dev",
         helperText: "Target environment for this bucket.",
       },
