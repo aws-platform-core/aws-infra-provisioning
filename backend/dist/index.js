@@ -59,10 +59,24 @@ app.post("/api/requests", authMiddleware, async (req, res) => {
         const finalParameters = { ...(parameters ?? {}) };
         if (template.id === "aws-s3-bucket") {
             const bucketName = finalParameters.bucket_name;
-            if (typeof bucketName === "string") {
-                const shortRequestId = requestId.replace("req-", "").slice(0, 8);
-                finalParameters.bucket_name = `${bucketName}-${shortRequestId}`.toLowerCase();
+            if (typeof bucketName !== "string" || bucketName.trim() === "") {
+                return res.status(400).json({
+                    message: "Bucket name is required",
+                });
             }
+            const normalizedBaseName = bucketName
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9-]+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-+|-+$/g, "");
+            if (!normalizedBaseName || normalizedBaseName.length < 3) {
+                return res.status(400).json({
+                    message: "Bucket name is invalid after normalization",
+                });
+            }
+            const shortRequestId = requestId.replace("req-", "").slice(0, 8);
+            finalParameters.bucket_name = `${normalizedBaseName}-${shortRequestId}`;
         }
         const provisionResult = await provisionRequestViaPullRequest({
             requestId,
@@ -117,6 +131,9 @@ app.get("/api/requests", authMiddleware, async (req, res) => {
 app.get("/api/requests/:id", authMiddleware, async (req, res) => {
     try {
         const requestId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!requestId) {
+            return res.status(400).json({ message: "Request ID is required" });
+        }
         const item = await getRequestById(requestId);
         if (!item) {
             return res.status(404).json({ message: "Request not found" });
@@ -135,3 +152,11 @@ app.get("/api/requests/:id", authMiddleware, async (req, res) => {
 app.listen(port, () => {
     console.log(`Backend listening on http://localhost:${port}`);
 });
+function normalizeS3BucketBaseName(value) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}

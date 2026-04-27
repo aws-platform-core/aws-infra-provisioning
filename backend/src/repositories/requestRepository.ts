@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamo } from "../db/dynamo.js";
 
 const tableName = process.env.DYNAMODB_REQUESTS_TABLE;
@@ -62,4 +62,26 @@ export async function listRequestsByUser(
   );
 
   return (result.Items ?? []) as RequestRecord[];
+}
+
+export async function updateRequestStatus(
+  requestId: string,
+  status: string
+): Promise<void> {
+  await dynamo.send(
+    new UpdateCommand({
+      TableName: tableName,
+      Key: {
+        request_id: requestId,
+      },
+      UpdateExpression: "SET #status = :status, updated_at = :updated_at",
+      ExpressionAttributeNames: {
+        "#status": "status",
+      },
+      ExpressionAttributeValues: {
+        ":status": status,
+        ":updated_at": new Date().toISOString(),
+      },
+    })
+  );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -11,11 +11,24 @@ import {
   Link,
   Divider,
   Button,
+  Stack,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AppLayout from "../components/AppLayout";
+import RequestStatusTimeline from "../components/RequestStatusTimeline";
 import { getRequestById } from "../api/requests";
 import type { RequestRecord } from "../types/request";
+import {
+  getRequestStatusColor,
+  getRequestStatusLabel,
+  getRelativeTime,
+} from "../utils/requestStatus";
+
+const POLL_INTERVAL_MS = 5000;
+
+function isTerminalStatus(status: string) {
+  return ["COMPLETED", "FAILED", "PLAN_FAILED", "DESTROYED", "DESTROY_FAILED"].includes(status);
+}
 
 export default function RequestDetailsPage() {
   const { id } = useParams();
@@ -23,16 +36,50 @@ export default function RequestDetailsPage() {
 
   const [request, setRequest] = useState<RequestRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [polling, setPolling] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!id) return;
+  const fetchRequest = useCallback(
+    async (isPolling = false) => {
+      if (!id) return;
 
-    getRequestById(id)
-      .then(setRequest)
-      .catch(() => setError("Failed to load request details"))
-      .finally(() => setLoading(false));
-  }, [id]);
+      try {
+        if (isPolling) {
+          setPolling(true);
+        }
+
+        const data = await getRequestById(id);
+        setRequest(data);
+        setError("");
+        setLastRefreshedAt(new Date());
+      } catch {
+        setError("Failed to load request details");
+      } finally {
+        setLoading(false);
+        if (isPolling) {
+          setPolling(false);
+        }
+      }
+    },
+    [id]
+  );
+
+  useEffect(() => {
+    fetchRequest(false);
+  }, [fetchRequest]);
+
+  useEffect(() => {
+    if (!request || isTerminalStatus(request.status)) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      fetchRequest(true);
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [request, fetchRequest]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -55,9 +102,7 @@ export default function RequestDetailsPage() {
             mb: 2,
           }}
         >
-          <Typography variant="h4">
-            Request Details
-          </Typography>
+          <Typography variant="h4">Request Details</Typography>
 
           <Button
             variant="outlined"
@@ -78,6 +123,41 @@ export default function RequestDetailsPage() {
           <Alert severity="warning">Request not found</Alert>
         ) : (
           <Box>
+            {!isTerminalStatus(request.status) && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {polling && <CircularProgress size={16} />}
+                    <Typography variant="body2">
+                      Status is being updated automatically every{" "}
+                      {POLL_INTERVAL_MS / 1000} seconds.
+                    </Typography>
+                  </Box>
+
+                  {request.updated_at && (
+                    <Typography variant="caption" color="text.secondary">
+                      Last updated: {getRelativeTime(request.updated_at)}
+                    </Typography>
+                  )}
+                </Stack>
+              </Alert>
+            )}
+
+            {isTerminalStatus(request.status) && lastRefreshedAt && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Last updated: {getRelativeTime(lastRefreshedAt)}
+                </Typography>
+              </Box>
+            )}
+
+            <RequestStatusTimeline status={request.status} />
+
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
@@ -95,6 +175,15 @@ export default function RequestDetailsPage() {
 
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
+                  Provider
+                </Typography>
+                <Typography variant="body1">
+                  {request.provider?.toUpperCase()}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
                   Requested By
                 </Typography>
                 <Typography variant="body1">{request.requested_by}</Typography>
@@ -104,7 +193,11 @@ export default function RequestDetailsPage() {
                 <Typography variant="subtitle2" color="text.secondary">
                   Status
                 </Typography>
-                <Chip label={request.status} color="primary" size="small" />
+                <Chip
+                  label={getRequestStatusLabel(request.status)}
+                  color={getRequestStatusColor(request.status)}
+                  size="small"
+                />
               </Grid>
 
               <Grid item xs={12} md={6}>
@@ -114,20 +207,23 @@ export default function RequestDetailsPage() {
                 <Typography variant="body1">{request.branch_name}</Typography>
               </Grid>
 
-              {/* <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Pull Request
                 </Typography>
                 <Link href={request.pr_url} target="_blank" rel="noreferrer">
                   {request.pr_url}
                 </Link>
-              </Grid> */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Provider
-                </Typography>
-                <Typography variant="body1">{request.provider?.toUpperCase()}</Typography>
               </Grid>
+
+              {/* <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  PR Number
+                </Typography>
+                <Typography variant="body1">
+                  {request.pr_number ? `#${request.pr_number}` : "-"}
+                </Typography>
+              </Grid> */}
 
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">

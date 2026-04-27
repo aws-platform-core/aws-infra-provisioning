@@ -403,11 +403,16 @@ export default function AppLayout({
           )}
 
           <Box
+            component={RouterLink}
+            to="/"
             sx={{
               display: "flex",
               alignItems: "center",
               flexGrow: 1,
               minHeight: 56,
+              textDecoration: "none",
+              color: "inherit",
+              cursor: "pointer",
             }}
           >
             <Box

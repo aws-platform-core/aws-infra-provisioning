@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  getRequestStatusColor,
+  getRequestStatusLabel,
+} from "../utils/requestStatus";
+import {
   Typography,
   Paper,
   Alert,
@@ -253,8 +257,17 @@ export default function MyRequestsPage() {
                             <Typography variant="caption" color="text.secondary">
                               Status
                             </Typography>
-                            <Box mt={0.5}>
-                              <Chip label={request.status} size="small" color="primary" />
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">
+                                Status
+                              </Typography>
+                              <Box mt={0.5}>
+                                <Chip
+                                  label={getRequestStatusLabel(request.status)}
+                                  size="small"
+                                  color={getRequestStatusColor(request.status)}
+                                />
+                              </Box>
                             </Box>
                           </Box>
 
@@ -383,7 +396,11 @@ export default function MyRequestsPage() {
                           <TableCell>{request.template_id}</TableCell>
 
                           <TableCell>
-                            <Chip label={request.status} size="small" color="primary" />
+                              <Chip
+                                label={getRequestStatusLabel(request.status)}
+                                size="small"
+                                color={getRequestStatusColor(request.status)}
+                              />
                           </TableCell>
 
                           <TableCell sx={{ wordBreak: "break-word", maxWidth: 240 }}>
