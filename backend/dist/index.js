@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
 import { runTemplateValidator } from "./validators/templateValidatorRegistry.js";
+import fs from "fs";
+import https from "https";
+import path from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
 import express from "express";
 import cors from "cors";
@@ -11,12 +15,27 @@ import { provisionRequestViaPullRequest } from "./services/requestProvisioningSe
 import { mapTemplateParametersToModuleInputs } from "./mappers/templateParameterMapper.js";
 const app = express();
 const port = Number(process.env.PORT || 8080);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://aip.odido.nl:5173",
+].filter(Boolean);
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-    credentials: true
+    origin: (origin, callback) => {
+        if (!origin) {
+            return callback(null, true);
+        }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`CORS not allowed for origin: ${origin}`));
+    },
+    credentials: true,
 }));
 app.use(express.json());
 app.use(morgan("dev"));
+app.options("*", cors());
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
 });
@@ -142,8 +161,17 @@ app.get("/api/requests/:id", authMiddleware, async (req, res) => {
         return res.status(500).json({ message: "Failed to fetch request" });
     }
 });
-app.listen(port, () => {
-    console.log(`Backend listening on http://localhost:${port}`);
+const certPath = process.env.HTTPS_CERT_PATH;
+const keyPath = process.env.HTTPS_KEY_PATH;
+if (!certPath || !keyPath) {
+    throw new Error("Missing HTTPS_CERT_PATH or HTTPS_KEY_PATH");
+}
+const httpsOptions = {
+    cert: fs.readFileSync(path.resolve(certPath)),
+    key: fs.readFileSync(path.resolve(keyPath)),
+};
+https.createServer(httpsOptions, app).listen(port, "0.0.0.0", () => {
+    console.log(`Backend listening on https://0.0.0.0:${port}`);
 });
 function normalizeS3BucketBaseName(value) {
     return value

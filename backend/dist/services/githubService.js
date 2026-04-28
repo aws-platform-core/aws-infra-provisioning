@@ -56,8 +56,13 @@ async function getFileSha(path, branch) {
         }
         return undefined;
     }
-    catch {
-        return undefined;
+    catch (error) {
+        if (error?.status === 404) {
+            // Expected for a brand new file on a newly created branch
+            return undefined;
+        }
+        console.error(`Unexpected GitHub error while fetching file SHA for '${path}' on branch '${branch}'`, error);
+        throw error;
     }
 }
 export async function upsertFile(path, content, branch, message) {

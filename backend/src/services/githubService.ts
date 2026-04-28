@@ -69,8 +69,17 @@ async function getFileSha(path: string, branch: string): Promise<string | undefi
     }
 
     return undefined;
-  } catch {
-    return undefined;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      // Expected for a brand new file on a newly created branch
+      return undefined;
+    }
+
+    console.error(
+      `Unexpected GitHub error while fetching file SHA for '${path}' on branch '${branch}'`,
+      error
+    );
+    throw error;
   }
 }
 
