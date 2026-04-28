@@ -305,14 +305,16 @@ export default function AppLayout({
                                   unmountOnExit={false}
                                 >
                                   <List component="div" disablePadding>
-                                    {templates.map((template) =>
-                                      renderNavItem(
-                                        template.name,
-                                        `/templates/${template.id}`,
-                                        getTemplateIcon(template.category),
-                                        true
-                                      )
-                                    )}
+                                    {templates.map((template) => (
+                                      <React.Fragment key={template.id}>
+                                        {renderNavItem(
+                                          template.name,
+                                          `/templates/${template.id}`,
+                                          getTemplateIcon(template.category),
+                                          true
+                                        )}
+                                      </React.Fragment>
+                                    ))}
                                   </List>
                                 </Collapse>
                               </React.Fragment>

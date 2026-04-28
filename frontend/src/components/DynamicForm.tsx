@@ -215,7 +215,7 @@ export default function DynamicForm({
   );
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 1 }}>
       <Typography variant="h5" gutterBottom>
         Request: {template.name}
       </Typography>
@@ -251,7 +251,7 @@ export default function DynamicForm({
           sx={{
             mt: 4,
             p: 2.5,
-            borderRadius: 2,
+            borderRadius: 1,
             backgroundColor: alpha(theme.palette.background.paper, 0.45),
             borderColor: alpha(theme.palette.primary.main, 0.12),
           }}

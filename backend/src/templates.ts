@@ -109,7 +109,7 @@ export const templates: Template[] = [
       },
       {
         name: "estimated_monthly_put_requests",
-        label: "Estimated Monthly PUT/LIST Requests",
+        label: "Estimated Monthly PUT Requests",
         type: "number",
         required: false,
         default: 100000,
@@ -182,41 +182,6 @@ export const templates: Template[] = [
         type: "select",
         required: true,
         options: ["dev", "agile", "prod"]
-      },
-      {
-        name: "cors",
-        label: "Enable CORS",
-        type: "boolean",
-        default: true
-      }
-    ]
-  },
-  {
-    id: "aws-api-lambda-function",
-    name: "AWS Lambda Function",
-    description: "Provision a serverless Lambda function",
-    category: "compute",
-    provider: "aws",
-    terraform_module_path: "../../modules/aws-lambda-function",
-    parameters: [
-      {
-        name: "function_name",
-        label: "Function Name",
-        type: "string",
-        required: true
-      },
-      {
-        name: "environment",
-        label: "Environment",
-        type: "select",
-        required: true,
-        options: ["dev", "agile", "prod"]
-      },
-      {
-        name: "versioning",
-        label: "Enable Versioning",
-        type: "boolean",
-        default: true
       },
       {
         name: "cors",
