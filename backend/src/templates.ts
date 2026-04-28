@@ -9,6 +9,9 @@ export type TemplateField = {
   helperText?: string;
   pattern?: string;
   patternErrorMessage?: string;
+  estimationOnly?: boolean; // To indicate if this parameter is only for cost estimation
+  min?: number;
+  max?: number;
 };
 
 export type Template = {
@@ -91,6 +94,43 @@ export const templates: Template[] = [
         patternErrorMessage:
           "Project tag must be 2-50 characters and may include letters, numbers, dot, underscore, and hyphen.",
       },
+      // Optional cost estimation inputs
+      {
+        name: "estimated_storage_gb",
+        label: "Estimated Storage (GB)",
+        type: "number",
+        required: false,
+        default: 100,
+        helperText:
+          "Optional. Used only for cost estimation, not for provisioning.",
+        estimationOnly: true,
+        min: 1,
+        max: 100000
+      },
+      {
+        name: "estimated_monthly_put_requests",
+        label: "Estimated Monthly PUT/LIST Requests",
+        type: "number",
+        required: false,
+        default: 100000,
+        helperText:
+          "Optional. Used only for cost estimation, not for provisioning.",
+        estimationOnly: true,
+        min: 0,
+        max: 1000000000
+      },
+      {
+        name: "estimated_monthly_get_requests",
+        label: "Estimated Monthly GET Requests",
+        type: "number",
+        required: false,
+        default: 1000000,
+        helperText:
+          "Optional. Used only for cost estimation, not for provisioning.",
+        estimationOnly: true,
+        min: 0,
+        max: 1000000000
+      }
     ],
   },
   {

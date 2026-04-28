@@ -4,6 +4,7 @@ import fs from "fs";
 import https from "https";
 import path from "path";
 import { fileURLToPath } from "url";
+import { estimateTemplateCost } from "./services/costEstimator.js";
 dotenv.config();
 
 import express, { type Request, type Response } from "express";
@@ -210,6 +211,32 @@ app.get("/api/requests/:id", authMiddleware, async (req: Request, res: Response)
   } catch (error) {
     console.error("Failed to fetch request", error);
     return res.status(500).json({ message: "Failed to fetch request" });
+  }
+});
+
+app.post("/api/templates/:id/cost-estimate", authMiddleware, (req: Request, res: Response) => {
+  try {
+    const templateId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    if (!templateId) {
+      return res.status(400).json({ message: "Template ID is required" });
+    }
+
+    const template = templates.find((t) => t.id === templateId);
+
+    if (!template) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    const { parameters } = req.body as {
+      parameters?: Record<string, unknown>;
+    };
+
+    const estimate = estimateTemplateCost(templateId, parameters ?? {});
+    return res.json(estimate);
+  } catch (error) {
+    console.error("Failed to estimate cost", error);
+    return res.status(500).json({ message: "Failed to estimate cost" });
   }
 });
 

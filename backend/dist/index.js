@@ -4,6 +4,7 @@ import fs from "fs";
 import https from "https";
 import path from "path";
 import { fileURLToPath } from "url";
+import { estimateTemplateCost } from "./services/costEstimator.js";
 dotenv.config();
 import express from "express";
 import cors from "cors";
@@ -159,6 +160,25 @@ app.get("/api/requests/:id", authMiddleware, async (req, res) => {
     catch (error) {
         console.error("Failed to fetch request", error);
         return res.status(500).json({ message: "Failed to fetch request" });
+    }
+});
+app.post("/api/templates/:id/cost-estimate", authMiddleware, (req, res) => {
+    try {
+        const templateId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!templateId) {
+            return res.status(400).json({ message: "Template ID is required" });
+        }
+        const template = templates.find((t) => t.id === templateId);
+        if (!template) {
+            return res.status(404).json({ message: "Template not found" });
+        }
+        const { parameters } = req.body;
+        const estimate = estimateTemplateCost(templateId, parameters ?? {});
+        return res.json(estimate);
+    }
+    catch (error) {
+        console.error("Failed to estimate cost", error);
+        return res.status(500).json({ message: "Failed to estimate cost" });
     }
 });
 const certPath = process.env.HTTPS_CERT_PATH;

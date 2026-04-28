@@ -9,6 +9,9 @@ export type TemplateField = {
   helperText?: string;
   pattern?: string;
   patternErrorMessage?: string;
+  estimationOnly?: boolean; // To indicate if this parameter is only for cost estimation
+  min?: number;
+  max?: number;
 };
 
 export type Template = {
