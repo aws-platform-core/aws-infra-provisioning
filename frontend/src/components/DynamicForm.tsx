@@ -66,13 +66,30 @@ export default function DynamicForm({
     }
   }, [initialValues]);
 
-  const validateField = (field: TemplateField, value: unknown): string => {
+  const isFieldVisible = (field: TemplateField, currentValues: Record<string, unknown>) => {
+    if (!field.showWhen) {
+      return true;
+    }
+
+    const dependentValue = currentValues[field.showWhen.field];
+    return dependentValue === field.showWhen.equals;
+  };
+
+  const validateField = (
+    field: TemplateField,
+    value: unknown,
+    currentValues: Record<string, unknown>
+  ): string => {
+    if (!isFieldVisible(field, currentValues)) {
+      return "";
+    }
+
     if (field.required) {
       if (value === "" || value === null || value === undefined) {
         return `${field.label} is required`;
       }
     }
-  
+
     if (
       field.type === "string" &&
       field.pattern &&
@@ -84,7 +101,7 @@ export default function DynamicForm({
         return field.patternErrorMessage || `${field.label} format is invalid`;
       }
     }
-  
+
     if (
       field.type === "number" &&
       value !== "" &&
@@ -94,16 +111,16 @@ export default function DynamicForm({
       if (typeof value !== "number" || Number.isNaN(value)) {
         return `${field.label} must be a valid number`;
       }
-  
+
       if (field.min !== undefined && value < field.min) {
         return `${field.label} must be at least ${field.min}`;
       }
-  
+
       if (field.max !== undefined && value > field.max) {
         return `${field.label} must be at most ${field.max}`;
       }
     }
-  
+
     return "";
   };
 
@@ -111,7 +128,11 @@ export default function DynamicForm({
     const newErrors: Record<string, string> = {};
 
     for (const field of template.parameters) {
-      const error = validateField(field, currentValues[field.name]);
+      if (!isFieldVisible(field, currentValues)) {
+        continue;
+      }
+
+      const error = validateField(field, currentValues[field.name], currentValues);
       if (error) {
         newErrors[field.name] = error;
       }
@@ -126,10 +147,11 @@ export default function DynamicForm({
 
     for (const field of template.parameters) {
       if (field.estimationOnly) continue;
+      if (!isFieldVisible(field, currentValues)) continue;
 
       if (field.required) {
         const value = currentValues[field.name];
-        const error = validateField(field, value);
+        const error = validateField(field, value, currentValues);
 
         if (error) {
           return false;
@@ -176,7 +198,7 @@ export default function DynamicForm({
     const field = template.parameters.find((f) => f.name === name);
     if (!field) return;
 
-    const error = validateField(field, value);
+    const error = validateField(field, value, nextValues);
 
     setErrors((prev) => ({
       ...prev,
@@ -208,14 +230,15 @@ export default function DynamicForm({
   };
 
   const provisioningFields = template.parameters.filter(
-    (field) => !field.estimationOnly
+    (field) => !field.estimationOnly && isFieldVisible(field, values)
   );
+
   const estimationFields = template.parameters.filter(
-    (field) => field.estimationOnly
+    (field) => field.estimationOnly && isFieldVisible(field, values)
   );
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 1 }}>
+    <Paper sx={{ p: 3, borderRadius: 3 }}>
       <Typography variant="h5" gutterBottom>
         Request: {template.name}
       </Typography>
@@ -251,7 +274,7 @@ export default function DynamicForm({
           sx={{
             mt: 4,
             p: 2.5,
-            borderRadius: 1,
+            borderRadius: 2,
             backgroundColor: alpha(theme.palette.background.paper, 0.45),
             borderColor: alpha(theme.palette.primary.main, 0.12),
           }}

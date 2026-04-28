@@ -22,6 +22,10 @@ export type TemplateValidationInput = {
     return /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(value);
   }
   
+  function isValidDocumentName(value: string): boolean {
+    return /^[A-Za-z0-9._/-]+$/.test(value);
+  }
+  
   function isNonEmptyString(value: unknown): value is string {
     return typeof value === "string" && value.trim() !== "";
   }
@@ -33,7 +37,9 @@ export type TemplateValidationInput = {
     const params = { ...input.parameters };
   
     const environment =
-      typeof params.environment === "string" ? params.environment : "";
+      typeof params.environment === "string" ? params.environment.toLowerCase().trim() : "";
+  
+    const websiteHostingEnabled = Boolean(params.website_hosting_enabled);
   
     if (!isNonEmptyString(params.bucket_name)) {
       errors.push("Bucket name is required.");
@@ -64,8 +70,30 @@ export type TemplateValidationInput = {
       }
     }
   
-    if (!["dev", "agile", "prod"].includes(environment)) {
-      errors.push("Environment must be one of: dev, agile, prod.");
+    if (!["dev", "qa", "prod"].includes(environment)) {
+      errors.push("Environment must be one of: dev, qa, prod.");
+    }
+  
+    if (typeof params.encryption_enabled !== "boolean") {
+      params.encryption_enabled = true;
+    }
+  
+    if (websiteHostingEnabled) {
+      if (!isNonEmptyString(params.index_document)) {
+        errors.push("Index document is required when static website hosting is enabled.");
+      } else if (!isValidDocumentName(params.index_document)) {
+        errors.push("Index document name is invalid.");
+      }
+  
+      if (
+        isNonEmptyString(params.error_document) &&
+        !isValidDocumentName(params.error_document)
+      ) {
+        errors.push("Error document name is invalid.");
+      }
+    } else {
+      params.index_document = "";
+      params.error_document = "";
     }
   
     if (!isNonEmptyString(params.tag_owner)) {

@@ -12,6 +12,10 @@ export type TemplateField = {
   estimationOnly?: boolean; // To indicate if this parameter is only for cost estimation
   min?: number;
   max?: number;
+  showWhen?: {
+    field: string;
+    equals: unknown;
+  };
 };
 
 export type Template = {

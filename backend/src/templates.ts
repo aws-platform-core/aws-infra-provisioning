@@ -12,6 +12,10 @@ export type TemplateField = {
   estimationOnly?: boolean; // To indicate if this parameter is only for cost estimation
   min?: number;
   max?: number;
+  showWhen?: {
+    field: string;
+    equals: unknown;
+  };
 };
 
 export type Template = {
@@ -58,8 +62,52 @@ export const templates: Template[] = [
         name: "versioning",
         label: "Enable Versioning",
         type: "boolean",
-        default: true,
+        default: false,
         helperText: "Recommended for protection against accidental overwrite and delete.",
+      },
+      {
+        name: "encryption_enabled",
+        label: "Enable Encryption",
+        type: "boolean",
+        default: false,
+        helperText: "Enables server-side encryption for the bucket.",
+      },
+      {
+        name: "website_hosting_enabled",
+        label: "Enable Static Website Hosting",
+        type: "boolean",
+        default: false,
+        helperText: "Enable only if this bucket is intended for static website hosting.",
+      },
+      {
+        name: "index_document",
+        label: "Index Document",
+        type: "string",
+        required: false,
+        placeholder: "index.html",
+        helperText: "Required only if website hosting is enabled.",
+        pattern: "^[A-Za-z0-9._/-]+$",
+        patternErrorMessage:
+          "Index document may only contain letters, numbers, dots, underscores, hyphens, and slashes.",
+        showWhen: {
+          field: "website_hosting_enabled",
+          equals: true
+        }
+      },
+      {
+        name: "error_document",
+        label: "Error Document",
+        type: "string",
+        required: false,
+        placeholder: "error.html",
+        helperText: "Optional. Used only if website hosting is enabled.",
+        pattern: "^[A-Za-z0-9._/-]+$",
+        patternErrorMessage:
+          "Error document may only contain letters, numbers, dots, underscores, hyphens, and slashes.",
+        showWhen: {
+          field: "website_hosting_enabled",
+          equals: true
+        }
       },
       {
         name: "tag_owner",
